@@ -272,9 +272,11 @@ function share() {
               <div class="now__body">
                 <p id="now-title" class="now__label">
                   <AppIcon :name="state.now.playing ? 'graphic_eq' : 'pause'" />
-                  {{ state.now.playing ? 'Now playing' : 'Paused' }}
-                  <template v-if="state.now.source === 'playlist'"> · from the playlist</template>
-                  <template v-else-if="state.now.name"> · picked by {{ state.now.name }}</template>
+                  <span>
+                    {{ state.now.playing ? 'Now playing' : 'Paused' }}
+                    <template v-if="state.now.source === 'playlist'"> · from the playlist</template>
+                    <template v-else-if="state.now.name"> · picked by {{ state.now.name }}</template>
+                  </span>
                 </p>
                 <h1>{{ state.now.track.title }}</h1>
                 <p class="now__artist">{{ state.now.track.artist }}</p>
@@ -515,6 +517,7 @@ function share() {
 
 .room__main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   min-width: 0;
 }
@@ -564,23 +567,35 @@ function share() {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   font: var(--md-sys-typescale-label-large);
   font-variation-settings: 'ROND' 100;
   opacity: 0.86;
 }
 
 .now__label .icon {
+  flex: 0 0 auto;
   font-size: 18px;
 }
 
+.now__label span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .now h1 {
+  display: -webkit-box;
   margin: 8px 0 2px;
   overflow: hidden;
   font: var(--md-sys-typescale-headline-large);
   font-variation-settings: 'ROND' 100;
   letter-spacing: var(--md-sys-typescale-headline-large-tracking);
-  text-overflow: ellipsis;
-  text-wrap: nowrap;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .now__artist {
@@ -643,6 +658,7 @@ function share() {
 /* Search */
 .search {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
@@ -696,6 +712,7 @@ function share() {
 
 .search__results {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   padding: 8px;
   border-radius: 28px;
@@ -732,6 +749,7 @@ function share() {
 .queue__list {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   list-style: none;
 }
@@ -859,7 +877,9 @@ function share() {
   position: sticky;
   top: 16px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+  min-width: 0;
 }
 
 .side section {
@@ -884,9 +904,8 @@ function share() {
 
 .share__qr {
   width: 100%;
-  max-width: 240px;
   align-self: center;
-  padding: 16px;
+  padding: 18px;
   border: 0;
   border-radius: 28px;
   background: #fff;
@@ -1014,6 +1033,11 @@ function share() {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.rules li .icon {
+  flex: 0 0 auto;
 }
 
 .rules li .icon {
@@ -1023,6 +1047,7 @@ function share() {
 }
 
 .rules .btn {
+  width: 100%;
   margin-top: 6px;
 }
 
@@ -1107,15 +1132,28 @@ function share() {
 
 @media (max-width: 960px) {
   .room__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .side {
     position: static;
   }
 
+
   .room__share-button {
     display: inline-flex;
+  }
+}
+
+/* Tablets: the cards sit below the queue, side by side instead of stretched. */
+@media (min-width: 601px) and (max-width: 960px) {
+  .side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .share {
+    grid-row: span 2;
   }
 }
 
@@ -1127,14 +1165,6 @@ function share() {
 
   .now__body {
     flex-basis: calc(100% - 110px);
-  }
-
-  .now h1 {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    text-wrap: wrap;
   }
 
   .now__controls {
