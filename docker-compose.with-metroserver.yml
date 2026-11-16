@@ -1,0 +1,51 @@
+# Metromaker website together with its own metroserver.
+# Set METROSERVER_PUBLIC_URL in the .env file to the address under which your
+# guests' phones reach the metroserver (port METROSERVER_PORT of this machine).
+#
+#   cp .env.example .env   # then edit .env
+#   docker compose -f docker-compose.with-metroserver.yml up -d
+
+services:
+  metromaker:
+    image: ghcr.io/finn-freitag/metromaker:latest
+    restart: unless-stopped
+    depends_on:
+      metroserver:
+        condition: service_healthy
+    ports:
+      - "${METROMAKER_PORT:-3000}:3000"
+    environment:
+      # Talk to the bundled server over the internal Docker network.
+      METROSERVER_URL: ws://metroserver:8080/ws
+      METROSERVER_PUBLIC_URL: ${METROSERVER_PUBLIC_URL:?Set METROSERVER_PUBLIC_URL in the .env file}
+      HOST_NAME: ${HOST_NAME:-Metromaker}
+      MAX_ROOMS: ${MAX_ROOMS:-20}
+      ROOM_IDLE_MINUTES: ${ROOM_IDLE_MINUTES:-180}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      YTM_LANGUAGE: ${YTM_LANGUAGE:-en}
+      YTM_REGION: ${YTM_REGION:-US}
+    volumes:
+      - metromaker-data:/data
+
+  metroserver:
+    image: ghcr.io/metrolistgroup/metroserver:latest
+    restart: unless-stopped
+    ports:
+      - "${METROSERVER_PORT:-8080}:8080"
+    environment:
+      PORT: 8080
+      DATABASE_FILE: /app/data/metroserver.db
+    volumes:
+      - metroserver-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    # Graceful shutdown drains clients and saves state within 10 seconds.
+    stop_grace_period: 15s
+
+volumes:
+  metromaker-data:
+  metroserver-data:

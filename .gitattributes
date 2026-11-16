@@ -1,0 +1,3 @@
+# Keep LF line endings everywhere (the files run in Linux containers).
+* text=auto eol=lf
+*.woff2 binary
