@@ -113,11 +113,11 @@ export function parsePlaylistId(input) {
   if (!value) return ''
   try {
     const list = new URL(value).searchParams.get('list')
-    if (list && /^[A-Za-z0-9_-]{10,100}$/.test(list)) return list
+    if (list && /^[A-Za-z0-9_-]{2,100}$/.test(list)) return list
   } catch {
     // Not a URL; fall through to the bare-ID check.
   }
-  return /^[A-Za-z0-9_-]{10,100}$/.test(value) ? value.replace(/^VL/, '') : ''
+  return /^[A-Za-z0-9_-]{2,100}$/.test(value) ? value.replace(/^VL/, '') : ''
 }
 
 /** @returns {Promise<{ id: string, title: string, tracks: Track[] }>} */
