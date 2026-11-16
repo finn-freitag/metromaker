@@ -40,11 +40,13 @@ docker compose up -d
 ```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/finn-freitag/metromaker/main/docker-compose.with-metroserver.yml
 curl -o .env https://raw.githubusercontent.com/finn-freitag/metromaker/main/.env.example
-# edit .env: set METROSERVER_PUBLIC_URL to the address phones use to reach your metroserver
+# edit .env if you want to change ports or other settings
 docker compose up -d
 ```
 
 The website is then available on port `3000` (change it with `METROMAKER_PORT`).
+
+In the bundled setup Metromaker forwards `/ws` to its metroserver, so listeners use the website's own address in Metrolist, for example `wss://music.example.com/ws`. The room page shows the exact address. Your reverse proxy only has to send the domain to port 3000 with WebSocket support.
 
 ### Settings (`.env`)
 
@@ -52,18 +54,17 @@ The website is then available on port `3000` (change it with `METROMAKER_PORT`).
 | --- | --- | --- |
 | `METROMAKER_PORT` | `3000` | Port of the website on the Docker host. |
 | `METROSERVER_URL` | | The metroserver Metromaker hosts its rooms on (`ws://` or `wss://`; `/ws` is added if missing). Ignored by the bundled setup. |
-| `METROSERVER_PUBLIC_URL` | `METROSERVER_URL` | The metroserver address shown to guests. Required for the bundled setup. |
-| `METROSERVER_PORT` | `8080` | Port of the bundled metroserver on the Docker host. |
+| `METROSERVER_PUBLIC_URL` | see text | The Listen Together address shown to guests. Defaults to `METROSERVER_URL` (website only) or to the website's own address + `/ws` (bundled). |
 | `HOST_NAME` | `Metromaker` | Name of the room host shown in Metrolist. |
 | `MAX_ROOMS` | `20` | Maximum number of simultaneous rooms. |
 | `ROOM_IDLE_MINUTES` | `180` | Rooms without page visitors and listeners are closed after this time. |
-| `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy so rate limits use `X-Forwarded-For`. |
+| `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy so each visitor's `X-Forwarded-For` address is used. Needed there for more than 32 listeners. |
 | `YTM_LANGUAGE` / `YTM_REGION` | `en` / `US` | Language and country for YouTube Music results. |
 
 ### Good to know
 
 - **Listeners must use the same metroserver.** A room only exists on the server Metromaker is connected to, so Metrolist has to be pointed at that server (shown on the room page) before entering the room code.
-- **Use HTTPS in public.** Put Metromaker (and your metroserver) behind a reverse proxy with TLS. WebSockets must be forwarded for both. Then use a `wss://` address for the metroserver.
+- **Use HTTPS in public.** Put Metromaker behind a reverse proxy with TLS that forwards WebSockets, and set `TRUST_PROXY=true`.
 - **Limits of foreign servers.** metroserver accepts at most 32 connections and 10 new rooms per minute from one address, and Metromaker uses one connection per room.
 - A metroserver with a User-Agent policy must let the User-Agent `Metromaker/1.0` host rooms.
 - When the fallback playlist runs out of unplayed songs in a room without replays, it starts over rather than going silent.

@@ -28,8 +28,11 @@ export const config = {
   port: int('PORT', 3000),
   /** Where this backend connects to as the room host. */
   metroserverUrl,
-  /** What guests have to enter in Metrolist. Defaults to the URL above. */
-  metroserverPublicUrl: normalizeMetroserverUrl(process.env.METROSERVER_PUBLIC_URL) || metroserverUrl,
+  /**
+   * What guests have to enter in Metrolist. Empty means "this website's own
+   * address + /ws", which Metromaker forwards to the metroserver above.
+   */
+  metroserverPublicUrl: normalizeMetroserverUrl(process.env.METROSERVER_PUBLIC_URL),
   hostName: (process.env.HOST_NAME || 'Metromaker').slice(0, 50),
   maxRooms: int('MAX_ROOMS', 20),
   roomIdleMs: int('ROOM_IDLE_MINUTES', 180) * 60_000,

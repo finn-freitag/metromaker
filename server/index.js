@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import http from 'node:http'
+import https from 'node:https'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { WebSocketServer } from 'ws'
@@ -259,10 +260,54 @@ const server = http.createServer((request, response) => {
   }
 })
 
+// Listen Together passthrough: Metrolist can use wss://<this site>/ws, so one
+// domain is enough and the metroserver needs no public address of its own.
+function forwardToMetroserver(request, socket, head) {
+  const target = new URL(config.metroserverUrl)
+  const secure = target.protocol === 'wss:'
+  const upstream = (secure ? https : http).request({
+    host: target.hostname,
+    port: target.port || (secure ? 443 : 80),
+    path: target.pathname + target.search,
+    method: 'GET',
+    // metroserver limits connections per address and reads the listener's
+    // address from this header; without it everyone would count as us.
+    headers: { ...request.headers, host: target.host, 'cf-connecting-ip': clientAddress(request) },
+  })
+  const refuse = status => {
+    if (socket.writable) socket.end(`HTTP/1.1 ${status}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`)
+  }
+  upstream.on('upgrade', (response, upstreamSocket, upstreamHead) => {
+    const lines = ['HTTP/1.1 101 Switching Protocols']
+    for (let index = 0; index < response.rawHeaders.length; index += 2) lines.push(`${response.rawHeaders[index]}: ${response.rawHeaders[index + 1]}`)
+    socket.write(`${lines.join('\r\n')}\r\n\r\n`)
+    if (upstreamHead.length) socket.write(upstreamHead)
+    if (head.length) upstreamSocket.write(head)
+    for (const side of [socket, upstreamSocket]) {
+      side.setTimeout(0)
+      side.setNoDelay(true)
+    }
+    upstreamSocket.pipe(socket)
+    socket.pipe(upstreamSocket)
+    upstreamSocket.on('error', () => socket.destroy())
+    upstreamSocket.on('close', () => socket.destroy())
+    socket.on('close', () => upstreamSocket.destroy())
+  })
+  // The metroserver answered without upgrading (at capacity, restarting, ...).
+  upstream.on('response', response => {
+    response.resume()
+    refuse(`${response.statusCode} ${response.statusMessage}`)
+  })
+  upstream.on('error', () => refuse('502 Bad Gateway'))
+  socket.on('error', () => upstream.destroy())
+  upstream.end()
+}
+
 // Live room state for browsers: /api/rooms/<id>/ws?voter=<id>
 const sockets = new WebSocketServer({ noServer: true, maxPayload: 1024 })
 server.on('upgrade', (request, socket, head) => {
   const url = new URL(request.url ?? '/', 'http://localhost')
+  if (url.pathname === '/ws') return forwardToMetroserver(request, socket, head)
   const match = /^\/api\/rooms\/([A-Za-z0-9]{1,16})\/ws$/.exec(url.pathname)
   const room = match && rooms.get(match[1])
   if (!room || room.sockets.size >= 500) {
@@ -290,7 +335,7 @@ setInterval(() => {
 rooms.load()
 server.listen(config.port, () => {
   console.log(`Metromaker listening on :${config.port}`)
-  console.log(`Hosting rooms on ${config.metroserverUrl}${config.metroserverPublicUrl !== config.metroserverUrl ? ` (guests use ${config.metroserverPublicUrl})` : ''}`)
+  console.log(`Hosting rooms on ${config.metroserverUrl} (guests use ${config.metroserverPublicUrl || 'this website\'s address + /ws'})`)
 })
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

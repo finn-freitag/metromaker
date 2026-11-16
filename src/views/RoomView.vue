@@ -63,7 +63,9 @@ onMounted(() => {
   isAdmin.value = adminToken(roomId.value) !== ''
   connect()
   clockTimer = setInterval(() => (clock.value = performance.now()), 500)
-  api.config().then(config => (serverUrl.value = config.metroserverUrl)).catch(() => {})
+  // Without a configured address, Metromaker itself relays Listen Together on /ws.
+  const ownUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`
+  api.config().then(config => (serverUrl.value = config.metroserverUrl || ownUrl)).catch(() => {})
 })
 
 onBeforeUnmount(() => {
@@ -195,7 +197,9 @@ async function closeRoom() {
 
 const serverUrl = ref('')
 const shareUrl = computed(() => `${location.origin}/${roomId.value}`)
-const appUrl = computed(() => `metrolist://party?r=${state.value?.code ?? roomId.value}`)
+// The one invitation link every Metrolist platform (Android, iOS, desktop)
+// turns into a prefilled join form. `metrolist://party?r=` only opens the app.
+const appUrl = computed(() => `metrolist://listen-together/${state.value?.code ?? roomId.value}`)
 const qr = ref('')
 const qrDialog = ref<HTMLDialogElement>()
 const copied = ref('')

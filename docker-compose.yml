@@ -12,7 +12,8 @@ services:
       - "${METROMAKER_PORT:-3000}:3000"
     environment:
       METROSERVER_URL: ${METROSERVER_URL:?Set METROSERVER_URL in the .env file}
-      METROSERVER_PUBLIC_URL: ${METROSERVER_PUBLIC_URL:-}
+      # Guests connect to the existing server directly unless you override this.
+      METROSERVER_PUBLIC_URL: ${METROSERVER_PUBLIC_URL:-${METROSERVER_URL}}
       HOST_NAME: ${HOST_NAME:-Metromaker}
       MAX_ROOMS: ${MAX_ROOMS:-20}
       ROOM_IDLE_MINUTES: ${ROOM_IDLE_MINUTES:-180}

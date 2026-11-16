@@ -1,6 +1,7 @@
 # Metromaker website together with its own metroserver.
-# Set METROSERVER_PUBLIC_URL in the .env file to the address under which your
-# guests' phones reach the metroserver (port METROSERVER_PORT of this machine).
+# Guests reach the metroserver through the website: in Metrolist they enter the
+# website's address followed by /ws (the room page shows it). Only the website
+# port has to be reachable.
 #
 #   cp .env.example .env   # then edit .env
 #   docker compose -f docker-compose.with-metroserver.yml up -d
@@ -17,7 +18,7 @@ services:
     environment:
       # Talk to the bundled server over the internal Docker network.
       METROSERVER_URL: ws://metroserver:8080/ws
-      METROSERVER_PUBLIC_URL: ${METROSERVER_PUBLIC_URL:?Set METROSERVER_PUBLIC_URL in the .env file}
+      METROSERVER_PUBLIC_URL: ${METROSERVER_PUBLIC_URL:-}
       HOST_NAME: ${HOST_NAME:-Metromaker}
       MAX_ROOMS: ${MAX_ROOMS:-20}
       ROOM_IDLE_MINUTES: ${ROOM_IDLE_MINUTES:-180}
@@ -30,8 +31,8 @@ services:
   metroserver:
     image: ghcr.io/metrolistgroup/metroserver:latest
     restart: unless-stopped
-    ports:
-      - "${METROSERVER_PORT:-8080}:8080"
+    # Not published: Metromaker forwards <website>/ws to it. To reach it directly
+    # as well, add:  ports: ["8080:8080"]
     environment:
       PORT: 8080
       DATABASE_FILE: /app/data/metroserver.db
