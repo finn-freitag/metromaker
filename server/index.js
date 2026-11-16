@@ -335,6 +335,7 @@ setInterval(() => {
 rooms.load()
 server.listen(config.port, () => {
   console.log(`Metromaker listening on :${config.port}`)
+  console.log(`Room limit: ${Number.isFinite(config.maxRooms) ? config.maxRooms : 'none'}${config.ownMetroserver ? ', own metroserver (per-address limits lifted)' : ''}`)
   console.log(`Hosting rooms on ${config.metroserverUrl} (guests use ${config.metroserverPublicUrl || 'this website\'s address + /ws'})`)
 })
 

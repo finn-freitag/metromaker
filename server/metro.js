@@ -74,8 +74,9 @@ function decode(data) {
  *  - `fatal` (message): the server refuses to let us host.
  */
 export class MetroHost extends EventEmitter {
-  constructor({ url, username, session = null }) {
+  constructor({ url, username, session = null, source = '' }) {
     super()
+    this.source = source
     this.url = url
     this.username = username
     this.sessionToken = session?.token ?? ''
@@ -93,7 +94,12 @@ export class MetroHost extends EventEmitter {
   start() {
     if (this.stopped) return
     clearTimeout(this.retryTimer)
-    const ws = new WebSocket(this.url, { headers: { 'User-Agent': 'Metromaker/1.0' }, handshakeTimeout: 10_000, maxPayload: 4 * 1024 * 1024 })
+    const headers = { 'User-Agent': 'Metromaker/1.0' }
+    // metroserver counts connections per source address and reads that address
+    // from this header. A source of our own keeps one room from using up the
+    // allowance of all the others.
+    if (this.source) headers['CF-Connecting-IP'] = this.source
+    const ws = new WebSocket(this.url, { headers, handshakeTimeout: 10_000, maxPayload: 4 * 1024 * 1024 })
     this.ws = ws
     ws.on('open', () => {
       this.attempts = 0

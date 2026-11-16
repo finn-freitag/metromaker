@@ -34,7 +34,13 @@ export const config = {
    */
   metroserverPublicUrl: normalizeMetroserverUrl(process.env.METROSERVER_PUBLIC_URL),
   hostName: (process.env.HOST_NAME || 'Metromaker').slice(0, 50),
-  maxRooms: int('MAX_ROOMS', 20),
+  /** 0 means no limit. */
+  maxRooms: int('MAX_ROOMS', 20, 0) || Infinity,
+  /**
+   * The metroserver is ours, so its per-address limits (32 connections, 10 new
+   * rooms per minute) should not apply to our room connections.
+   */
+  ownMetroserver: /^(1|true|yes)$/i.test(process.env.METROSERVER_IS_OWN ?? ''),
   roomIdleMs: int('ROOM_IDLE_MINUTES', 180) * 60_000,
   dataDir: path.resolve(process.env.DATA_DIR || './data'),
   trustProxy: /^(1|true|yes)$/i.test(process.env.TRUST_PROXY ?? ''),

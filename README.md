@@ -56,7 +56,8 @@ In the bundled setup Metromaker forwards `/ws` to its metroserver, so listeners 
 | `METROSERVER_URL` | | The metroserver Metromaker hosts its rooms on (`ws://` or `wss://`; `/ws` is added if missing). Ignored by the bundled setup. |
 | `METROSERVER_PUBLIC_URL` | see text | The Listen Together address shown to guests. Defaults to `METROSERVER_URL` (website only) or to the website's own address + `/ws` (bundled). |
 | `HOST_NAME` | `Metromaker` | Name of the room host shown in Metrolist. |
-| `MAX_ROOMS` | `20` | Maximum number of simultaneous rooms. |
+| `MAX_ROOMS` | `20` | Maximum number of simultaneous rooms. `0` means no limit. |
+| `METROSERVER_IS_OWN` | `false` | Website-only setup: set to `true` if the metroserver is yours and reached directly. Lifts its 32-rooms-per-address limit. Always on in the bundled setup. |
 | `ROOM_IDLE_MINUTES` | `180` | Rooms without page visitors and listeners are closed after this time. |
 | `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy so each visitor's `X-Forwarded-For` address is used. Needed there for more than 32 listeners. |
 | `YTM_LANGUAGE` / `YTM_REGION` | `en` / `US` | Language and country for YouTube Music results. |
@@ -65,7 +66,7 @@ In the bundled setup Metromaker forwards `/ws` to its metroserver, so listeners 
 
 - **Listeners must use the same metroserver.** A room only exists on the server Metromaker is connected to, so Metrolist has to be pointed at that server (shown on the room page) before entering the room code.
 - **Use HTTPS in public.** Put Metromaker behind a reverse proxy with TLS that forwards WebSockets, and set `TRUST_PROXY=true`.
-- **Limits of foreign servers.** metroserver accepts at most 32 connections and 10 new rooms per minute from one address, and Metromaker uses one connection per room.
+- **Number of rooms.** Metromaker uses one metroserver connection per room, and a metroserver accepts at most 32 connections and 10 new rooms per minute from one address. On your own metroserver Metromaker sidesteps this by giving every room its own source (`METROSERVER_IS_OWN`, automatic in the bundled setup); raise `MAX_ROOMS` or set it to `0`. A metroserver handles at most 10,000 rooms and 10,000 connections in total.
 - A metroserver with a User-Agent policy must let the User-Agent `Metromaker/1.0` host rooms.
 - When the fallback playlist runs out of unplayed songs in a room without replays, it starts over rather than going silent.
 - Votes are tied to a random ID stored in the browser. That keeps honest guests to one vote per song; it is not tamper-proof.

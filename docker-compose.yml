@@ -15,6 +15,7 @@ services:
       # Guests connect to the existing server directly unless you override this.
       METROSERVER_PUBLIC_URL: ${METROSERVER_PUBLIC_URL:-${METROSERVER_URL}}
       HOST_NAME: ${HOST_NAME:-Metromaker}
+      METROSERVER_IS_OWN: ${METROSERVER_IS_OWN:-false}
       MAX_ROOMS: ${MAX_ROOMS:-20}
       ROOM_IDLE_MINUTES: ${ROOM_IDLE_MINUTES:-180}
       TRUST_PROXY: ${TRUST_PROXY:-false}

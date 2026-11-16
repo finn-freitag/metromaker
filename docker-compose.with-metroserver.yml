@@ -20,6 +20,9 @@ services:
       METROSERVER_URL: ws://metroserver:8080/ws
       METROSERVER_PUBLIC_URL: ${METROSERVER_PUBLIC_URL:-}
       HOST_NAME: ${HOST_NAME:-Metromaker}
+      # The bundled server is ours: its 32-connections-per-address limit must not
+      # cap the number of rooms.
+      METROSERVER_IS_OWN: "true"
       MAX_ROOMS: ${MAX_ROOMS:-20}
       ROOM_IDLE_MINUTES: ${ROOM_IDLE_MINUTES:-180}
       TRUST_PROXY: ${TRUST_PROXY:-false}

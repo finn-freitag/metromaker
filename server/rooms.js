@@ -51,7 +51,12 @@ export class Room {
     this.metroError = ''
     this.closed = false
 
-    this.metro = new MetroHost({ url: config.metroserverUrl, username: config.hostName, session: data.metro ?? null })
+    this.metro = new MetroHost({
+      url: config.metroserverUrl,
+      username: config.hostName,
+      session: data.metro ?? null,
+      source: config.ownMetroserver ? `metromaker-${randomBytes(8).toString('hex')}` : '',
+    })
     this.metro.on('ready', event => this.#onMetroReady(event))
     this.metro.on('code', () => this.changed())
     this.metro.on('users', () => {
